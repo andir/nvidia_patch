@@ -1,0 +1,32 @@
+--- kernel.org/nv.c	2013-04-10 17:41:33.390174422 +0000
++++ kernel/nv.c	2013-04-10 17:51:33.785190213 +0000
+@@ -2735,6 +2735,21 @@ nv_kern_probe
+ 
+     num_probed_nv_devices++;
+ 
++    if (dev->device == 0x1180) {
++    	nv_printf(NV_DBG_ERRORS, "Changing Device ID from %04x to 0x11BA\n", dev->device);
++	dev->device = 0x11BA;
++    }
++
++    nv_printf(NV_DBG_ERRORS,
++    	"NVRM test: dev->device: 0x%04X\n"
++    	"NVRM test: dev->class: 0x%x\n"
++	"NVRM test: dev->vendor: 0x%x\n"
++	"NVRM test: dev->devfn: 0x%x\n"
++	"NVRM test: dev->subsystem_vendor: 0x%x\n"
++	"NVRM test: dev->subsystem_device: 0x%x\n",
++    	dev->device, dev->class, dev->vendor, dev->devfn,
++	dev->subsystem_vendor, dev->subsystem_device
++    );
+     if (pci_enable_device(dev) != 0)
+     {
+         nv_printf(NV_DBG_ERRORS,
+@@ -2755,6 +2770,7 @@ nv_kern_probe
+     {
+         if (NV_PCI_RESOURCE_VALID(dev, i))
+         {
++
+             if ((NV_PCI_RESOURCE_FLAGS(dev, i) & PCI_BASE_ADDRESS_MEM_TYPE_64) &&
+                 ((NV_PCI_RESOURCE_START(dev, i) >> PAGE_SHIFT) > 0xfffffULL))
+             {

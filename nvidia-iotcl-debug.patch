@@ -1,0 +1,61 @@
+--- kernel/nv.c.org	2013-04-11 12:10:37.398169200 +0000
++++ kernel/nv.c	2013-04-11 14:32:05.627806155 +0000
+@@ -1815,7 +1815,7 @@
+ 
+     arg_size = _IOC_SIZE(cmd);
+     arg_cmd  = _IOC_NR(cmd);
+-
++    nv_printf(NV_DBG_ERRORS, "NV-HACK: cmd 0x%x\n", cmd);
+     if (arg_cmd == NV_ESC_IOCTL_XFER_CMD)
+     {
+         if (arg_size != sizeof(nv_ioctl_xfer_t))
+@@ -1837,6 +1837,8 @@
+         arg_cmd  = ioc_xfer.cmd;
+         arg_size = ioc_xfer.size;
+         arg_ptr  = NvP64_VALUE(ioc_xfer.ptr);
++    	
++	nv_printf(NV_DBG_ERRORS, "NV-HACK: cmd == NV_ESC_IOCTL_XFER_CMD, arg_cmd=%x, arg_size=%x, arg_ptr=%x\n", arg_cmd, arg_size, arg_ptr);
+ 
+         if (arg_size > NV_ABSOLUTE_MAX_IOCTL_SIZE)
+         {
+@@ -1925,6 +1927,7 @@
+                 tnv = NV_STATE_PTR(tnvl);
+                 if (tnv->device_id)
+                 {
++		    nv_printf(NV_DBG_ERRORS, "NV-HACK: arg_cmd 0x%x, passing interface %04x:%04x GPU-%i\n",arg_cmd,tnv->vendor_id, tnv->device_id, tnv->gpu_id);
+                     ci->flags = NV_IOCTL_CARD_INFO_FLAG_PRESENT;
+                     ci->domain = tnv->domain;
+                     ci->bus = tnv->bus;
+@@ -1953,6 +1956,7 @@
+         }
+ 
+         default:
++	    nv_printf(NV_DBG_ERRORS, "sending back file 0x%x, arg_size: 0x%x\n", file, arg_size);
+             rmStatus = rm_ioctl(sp, nv, NV_GET_FILE_PRIVATE(file),
+                     arg_cmd, arg_copy, arg_size);
+             status = ((rmStatus == RM_OK) ? 0 : -EINVAL);
+@@ -1971,6 +1975,24 @@
+                 status = -EFAULT;
+             }
+         }
++	{
++		int* character, counter = 0;
++		if (arg_size < 100) {
++			nv_printf(NV_DBG_ERRORS,"Dumping data:\n");
++		}
++		for (character = (int*) arg_copy; character < (int*)( arg_copy + arg_size); character++, counter++) {
++			if (*character == 0x118010de) {
++				nv_printf(NV_DBG_ERRORS, "NV-HACK: 1180 found in returned data, size at 0x%x/0x%x\n", counter,arg_size);
++			}
++			if (arg_size < 100) {
++				nv_printf(NV_DBG_ERRORS,"%08x ",(character));
++				if (counter+1 == arg_size) {
++					nv_printf(NV_DBG_ERRORS,"\n");
++				}
++			}
++		}
++
++	}
+         NV_KFREE(arg_copy, arg_size);
+     }
+ 
